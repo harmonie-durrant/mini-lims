@@ -1,0 +1,84 @@
+services:
+  database:
+    container_name: mini_lims_database
+    image: postgres:15
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mini_lims_network
+
+  alembic:
+    container_name: mini_lims_alembic
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      database:
+        condition: service_healthy
+    volumes:
+      - ../backend:/app
+    working_dir: /app
+    command: ["alembic", "upgrade", "head"]
+    networks:
+      - mini_lims_network
+
+  backend:
+    container_name: mini_lims_backend
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    depends_on:
+      database:
+        condition: service_healthy
+      alembic:
+        condition: service_completed_successfully
+    volumes:
+      - ../backend:/app
+    working_dir: /app
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    ports:
+      - "8000:8000"
+    networks:
+      - mini_lims_network
+
+  # frontend:
+  #   container_name: mini_lims_frontend
+  #   build: ../frontend
+  #   depends_on: ["backend"]
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - ../frontend:/app
+  #   environment:
+  #     REACT_APP_BACKEND_URL: http://localhost:8000
+  #   networks:
+  #     - mini_lims_network
+
+volumes:
+  pgdata:
+
+networks:
+  mini_lims_network:
+    driver: bridge
