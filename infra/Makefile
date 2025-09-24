@@ -7,6 +7,9 @@ up:
 down:
 	docker-compose down
 
+clean:
+	docker-compose down --volumes
+
 status:
 	docker-compose ps
 	echo "🔧 Testing backend api..."
