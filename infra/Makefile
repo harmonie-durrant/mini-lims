@@ -1,5 +1,6 @@
 apply_migration:
 	docker-compose run --rm alembic alembic upgrade head
+	docker-compose down backend && docker-compose up -d backend
 
 up:
 	docker-compose up -d --build
