@@ -1,5 +1,6 @@
 from datetime import timedelta
 from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from . import models
 from .database import get_db
@@ -13,6 +14,14 @@ from .jwt import (
 from .form_vaidation import verify_email_format
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://localhost:4173", "https://mini-lims.harmoniedurrant.com"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def index():
