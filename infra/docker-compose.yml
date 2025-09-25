@@ -64,18 +64,22 @@ services:
     networks:
       - mini_lims_network
 
-  # frontend:
-  #   container_name: mini_lims_frontend
-  #   build: ../frontend
-  #   depends_on: ["backend"]
-  #   ports:
-  #     - "3000:3000"
-  #   volumes:
-  #     - ../frontend:/app
-  #   environment:
-  #     REACT_APP_BACKEND_URL: http://localhost:8000
-  #   networks:
-  #     - mini_lims_network
+  frontend:
+    container_name: mini_lims_frontend
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      target: production
+    env_file:
+      - .env
+    environment:
+      VITE_API_URL: http://localhost:8000
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+    networks:
+      - mini_lims_network
 
 volumes:
   pgdata:
