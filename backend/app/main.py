@@ -12,6 +12,10 @@ from .jwt import (
     ACCESS_TOKEN_EXPIRE_MINUTES
 )
 from .form_vaidation import verify_email_format
+from .permissions import (
+    has_permission,
+    user_has_higher_role
+)
 
 app = FastAPI()
 
@@ -52,22 +56,27 @@ def protected_test(current_user: models.User = Depends(get_current_user)):
         "roles": current_user.roles
     }
 
-#TODO: Protect this endpoint so only admin users can access it
 @app.post("/users")
-def create_user(email: str, password: str, db: Session = Depends(get_db)):
-    # Check if user already exists
+def create_user(email: str, password: str, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    if (has_permission(db, current_user.roles, 'create_users') is False):
+        raise HTTPException(status_code=403, detail="You do not have permission to create users")
+
     existing_user = db.query(models.User).filter(models.User.email == email).first()
     if existing_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    
+        if (has_permission(db, current_user.roles, 'update_users') is False or user_has_higher_role(db, current_user, existing_user) is False):
+            raise HTTPException(status_code=403, detail="You do not have permission to update users")
+        existing_user.password_hash = get_password_hash(password)
+        db.commit()
+        db.refresh(existing_user)
+        return {"id": existing_user.id, "email": existing_user.email, "created_at": existing_user.created_at}
+
     is_valid, message = verify_email_format(email)
     if not is_valid:
         raise HTTPException(status_code=400, detail=message)
-    
+
     password_hash = get_password_hash(password)
     user = models.User(email=email, password_hash=password_hash)
     db.add(user)
     db.commit()
     db.refresh(user)
     return {"id": user.id, "email": user.email, "created_at": user.created_at}
-
