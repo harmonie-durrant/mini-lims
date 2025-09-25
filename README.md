@@ -103,7 +103,107 @@ The API server runs on `http://localhost:8000`
 
 ## 🧪 Testing
 
-TODO: Testing instructions will be added here once tests are implemented.
+### Automated Test Suite
+
+**Run the complete JWT authentication test suite:**
+```bash
+# Make sure the backend is running first
+cd infra && docker-compose up backend -d
+
+# Run the automated tests
+cd .. && ./tests/jwt.sh
+```
+
+The test suite includes:
+- ✅ API health check
+- ✅ User registration (valid/invalid cases)
+- ✅ User login authentication
+- ✅ JWT token validation
+- ✅ Protected endpoint access
+- ✅ User data retrieval
+- ✅ API documentation accessibility
+
+**Example output:**
+```
+🎉 All tests passed!
+Total Tests: 15
+Passed: 15
+Failed: 0
+JWT Authentication is working correctly.
+```
+
+### Manual API Testing with curl
+
+**1. Health Check**
+```bash
+curl http://localhost:8000/
+# Expected: {"ok": true}
+```
+
+**2. Create a new user**
+```bash
+curl -X POST "http://localhost:8000/users?email=test@example.com&password=testpassword123"
+# Expected: {"id": 1, "email": "test@example.com", "created_at": "..."}
+```
+
+**3. Login to get JWT token**
+```bash
+curl -X POST "http://localhost:8000/login?email=test@example.com&password=testpassword123"
+# Expected: {"access_token": "eyJ...", "token_type": "bearer", "user_id": 1, "email": "test@example.com"}
+```
+
+**4. Test protected endpoint**
+```bash
+TOKEN="your_jwt_token_here"
+curl -X GET "http://localhost:8000/protected_test" \
+  -H "Authorization: Bearer $TOKEN"
+# Expected: {"ok": true, "message": "You are authorized...", "user_id": 1, "email": "test@example.com", "roles": null}
+```
+
+### API Testing with Python
+
+Create a test script `test_api.py`:
+
+```python
+import requests
+import json
+
+BASE_URL = "http://localhost:8000"
+
+# 1. Health check
+response = requests.get(f"{BASE_URL}/")
+print("Health check:", response.json())
+
+# 2. Create user
+user_data = {"email": "test@example.com", "password": "testpassword123"}
+response = requests.post(f"{BASE_URL}/users", data=user_data)
+print("Create user:", response.json())
+
+# 3. Login
+response = requests.post(f"{BASE_URL}/login", data=user_data)
+token_data = response.json()
+print("Login:", token_data)
+
+# 4. Test protected endpoint
+if "access_token" in token_data:
+    headers = {"Authorization": f"Bearer {token_data['access_token']}"}
+    response = requests.get(f"{BASE_URL}/protected_test", headers=headers)
+    print("Protected endpoint:", response.json())
+else:
+    print("Failed to get access token")
+```
+
+### Interactive API Documentation
+
+Visit the auto-generated API documentation:
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+
+These interfaces allow you to:
+- View all available endpoints
+- See request/response schemas
+- Test endpoints directly in your browser
+- Try authentication flows
 
 ## 🛠️ Environment Variables
 
