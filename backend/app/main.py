@@ -43,13 +43,7 @@ def protected_test(current_user: models.User = Depends(get_current_user)):
         "roles": current_user.roles
     }
 
-@app.get("/users/{user_id}")
-def read_user(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
-
+#TODO: Protect this endpoint so only admin users can access it
 @app.post("/users")
 def create_user(email: str, password: str, db: Session = Depends(get_db)):
     # Check if user already exists
