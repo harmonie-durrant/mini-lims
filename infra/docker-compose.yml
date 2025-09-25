@@ -49,6 +49,7 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL}
       PGPASSWORD: ${POSTGRES_PASSWORD}
+      SECRET_KEY: ${SECRET_KEY}
     depends_on:
       database:
         condition: service_healthy
