@@ -1,11 +1,13 @@
 import './App.css'
+const backend_url = import.meta.env.VITE_API_URL || 'error: VITE_API_URL not set';
+
 
 function App() {
   return (
     <>
       <h1>Mini LIMS</h1>
       <p>
-        This is a minimal Laboratory Information Management System (LIMS) application. Made with ❤ by Harmonie Durrant.
+        The backend url is {backend_url}
       </p>
     </>
   )

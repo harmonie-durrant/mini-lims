@@ -1,33 +1,22 @@
-# Multi-stage build for Vite React application
-
-# Stage 1: Build stage
 FROM node:20-alpine AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files
 COPY package*.json ./
 
-# Install dependencies
 RUN npm ci --only=production=false
 
-# Copy source code
 COPY . .
 
-# Build the application
+ARG VITE_API_URL=$VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
 RUN npm run build
 
-# Stage 2: Production stage with Nginx
 FROM nginx:alpine AS production
 
-# Copy built assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy custom nginx configuration (optional)
-# COPY nginx.conf /etc/nginx/nginx.conf
-
-# Create a simple nginx configuration for SPA
 RUN echo 'server { \
     listen 80; \
     server_name localhost; \
@@ -46,28 +35,6 @@ RUN echo 'server { \
     } \
 }' > /etc/nginx/conf.d/default.conf
 
-# Expose port 80
 EXPOSE 80
 
-# Start nginx
 CMD ["nginx", "-g", "daemon off;"]
-
-# Alternative: Development stage (uncomment if needed for development)
-# FROM node:20-alpine AS development
-# 
-# WORKDIR /app
-# 
-# # Copy package files
-# COPY package*.json ./
-# 
-# # Install all dependencies (including dev)
-# RUN npm ci
-# 
-# # Copy source code
-# COPY . .
-# 
-# # Expose Vite dev server port
-# EXPOSE 5173
-# 
-# # Start development server
-# CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
