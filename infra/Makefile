@@ -14,6 +14,8 @@ clean:
 	docker-compose down --volumes
 
 status:
+	echo "🔧 Waiting for services to start..."
+	sleep 5
 	docker-compose ps
 	echo "🔧 Testing backend api..."
 	curl -s "http://localhost:8000/" | python3 -m json.tool
@@ -23,6 +25,7 @@ status:
 	docker-compose exec database psql -U mini_lims -d mini_lims -c "\d users"
 
 test:
+	sleep 2
 	for test_file in ../tests/*.sh; do \
 		echo "Running $$test_file..."; \
 		bash $$test_file > /dev/null 2>&1 || exit 1; \
@@ -31,6 +34,7 @@ test:
 	echo "🎉 All tests passed!"
 
 test_verbose:
+	sleep 2
 	for test_file in ../tests/*.sh; do \
 		echo "Running $$test_file..."; \
 		bash $$test_file || exit 1; \
