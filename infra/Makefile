@@ -1,3 +1,5 @@
+all: down up apply_migration status
+
 apply_migration:
 	docker-compose run --rm alembic alembic upgrade head
 	docker-compose down backend && docker-compose up -d backend
@@ -35,6 +37,4 @@ test_verbose:
 	echo "✅ $$test_file passed!"; \
 	done
 
-all: up apply_migration status
-
-.PHONY: apply_migration up down status
+.PHONY: apply_migration up down status test test_verbose all clean
