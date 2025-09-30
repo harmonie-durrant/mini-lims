@@ -39,14 +39,14 @@ def verify_token(token: str):
         if user_id is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials",
+                detail="Could not validate credentials: userid is missing",
                 headers={"WWW-Authenticate": "Bearer"},
             )
         return user_id
     except jwt.PyJWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
+            detail="Could not validate credentials: token is invalid",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
