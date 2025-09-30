@@ -103,14 +103,12 @@ function AppContent({ isLoggedIn, setIsLoggedIn }: {
 
   useEffect(() => {
     const loggedIn = !!Cookies.get('access_token');
-    console.log('Location changed to:', location.pathname, 'Token exists:', loggedIn);
     setIsLoggedIn(loggedIn);
   }, [location.pathname, setIsLoggedIn]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       const loggedIn = !!Cookies.get('access_token');
-      console.log('Delayed check - Token exists:', loggedIn, 'Current isLoggedIn:', isLoggedIn);
       if (loggedIn !== isLoggedIn) {
         setIsLoggedIn(loggedIn);
       }
