@@ -59,6 +59,7 @@ docker-compose run --rm alembic alembic revision --autogenerate -m "Description 
 **Apply migrations:**
 ```bash
 docker-compose run --rm alembic alembic upgrade head
+# or use make apply_migration
 ```
 
 **Check migration status:**

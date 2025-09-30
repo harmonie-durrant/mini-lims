@@ -51,3 +51,48 @@ class Role(Base):
     - publish_results  | can publish results
 
 """
+
+class Sample(Base):
+    __tablename__ = "samples"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.now)
+    updated_at = Column(DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
+    created_by = Column(Integer, nullable=False)
+    status = Column(String, nullable=False, default="new")  # e.g., new, in_progress, completed
+    tests = Column(String, nullable=True)  # Comma-separated test IDs
+    results = Column(String, nullable=True)  # Comma-separated result IDs
+    assigned_to = Column(Integer, nullable=True)  # User ID of the person assigned to the sample
+
+class Test(Base):
+    __tablename__ = "tests"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.now)
+    updated_at = Column(DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
+    created_by = Column(Integer, nullable=False)
+    parameters = Column(String, nullable=True)  # JSON string of test parameters
+    standard_values = Column(String, nullable=True)  # JSON string of standard values for the test
+    status = Column(String, nullable=False, default="active")  # e.g., active, inactive
+    assigned_to = Column(Integer, nullable=True)  # User ID of the person responsible for the test
+
+class Result(Base):
+    __tablename__ = "results"
+
+    id = Column(Integer, primary_key=True)
+    sample_id = Column(Integer, nullable=False)
+    test_id = Column(Integer, nullable=False)
+    value = Column(String, nullable=False)
+    unit = Column(String, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.now)
+    updated_at = Column(DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
+    created_by = Column(Integer, nullable=False)
+    status = Column(String, nullable=False, default="draft")  # e.g., draft, validated, published
+    validated_by = Column(Integer, nullable=True)  # User ID of the person who validated the result
+    published_by = Column(Integer, nullable=True)  # User ID of the person who published the result
+    comments = Column(String, nullable=True)  # Comments or notes about the result
+
