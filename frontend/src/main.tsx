@@ -5,8 +5,8 @@ import App from './App.tsx'
 import Navigation from './components/Navigation.tsx'
 
 createRoot(document.getElementById('root')!).render(
-  <div>
+  <StrictMode>
       <Navigation />
       <App />
-  </div>,
+  </StrictMode>,
 )
