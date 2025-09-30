@@ -2,6 +2,8 @@
 
 set -e
 
+ADMIN_EMAIL="test@example.com"
+
 BASE_URL="http://localhost:8000"
 TEST_EMAIL="testuser$(date +%s)@example.com"
 TEST_PASSWORD="testpassword123"
@@ -69,9 +71,26 @@ check_api_status() {
 test_user_registration() {
     print_header "User Registration Tests"
 
-    # Test 1: Valid user registration
-    print_test "Register new user with valid credentials"
-    response=$(curl -s -w "%{http_code}" -o /tmp/register_response -X POST "$BASE_URL/users?email=$TEST_EMAIL&password=$TEST_PASSWORD")
+    print_test "Get admin authentication token"
+    admin_response=$(curl -s -w "%{http_code}" -o /tmp/admin_login_response -X POST "$BASE_URL/login?email=$ADMIN_EMAIL&password=$TEST_PASSWORD")
+    admin_http_code="${admin_response: -3}"
+    
+    if [ "$admin_http_code" -eq 200 ]; then
+        admin_content=$(cat /tmp/admin_login_response)
+        ADMIN_TOKEN=$(echo "$admin_content" | grep -o '"access_token":"[^"]*"' | cut -d'"' -f4)
+        print_success "Admin login successful"
+        print_info "Admin token obtained (length: ${#ADMIN_TOKEN})"
+    else
+        admin_content=$(cat /tmp/admin_login_response)
+        print_failure "Admin login failed (HTTP $admin_http_code): $admin_content"
+        return
+    fi
+
+    # Test 1: Valid user registration with admin token
+    print_test "Register new user with valid credentials (admin authenticated)"
+    response=$(curl -s -w "%{http_code}" -o /tmp/register_response -X POST \
+        -H "Authorization: Bearer $ADMIN_TOKEN" \
+        "$BASE_URL/register?email=$TEST_EMAIL&password=$TEST_PASSWORD")
     http_code="${response: -3}"
 
     if [ "$http_code" -eq 200 ]; then
@@ -90,7 +109,9 @@ test_user_registration() {
 
     # Test 2: Duplicate email registration
     print_test "Register user with duplicate email (should fail)"
-    response=$(curl -s -w "%{http_code}" -o /tmp/duplicate_response -X POST "$BASE_URL/users?email=$TEST_EMAIL&password=$TEST_PASSWORD")
+    response=$(curl -s -w "%{http_code}" -o /tmp/duplicate_response -X POST \
+        -H "Authorization: Bearer $ADMIN_TOKEN" \
+        "$BASE_URL/register?email=$TEST_EMAIL&password=$TEST_PASSWORD")
     http_code="${response: -3}"
 
     if [ "$http_code" -eq 400 ]; then
@@ -107,7 +128,9 @@ test_user_registration() {
 
     # Test 3: Invalid email format
     print_test "Register user with invalid email format (should fail)"
-    response=$(curl -s -w "%{http_code}" -o /tmp/invalid_email_response -X POST "$BASE_URL/users?email=invalidemail&password=$TEST_PASSWORD")
+    response=$(curl -s -w "%{http_code}" -o /tmp/invalid_email_response -X POST \
+        -H "Authorization: Bearer $ADMIN_TOKEN" \
+        "$BASE_URL/register?email=invalidemail&password=$TEST_PASSWORD")
     http_code="${response: -3}"
 
     if [ "$http_code" -eq 400 ]; then
@@ -120,6 +143,23 @@ test_user_registration() {
     else
         content=$(cat /tmp/invalid_email_response)
         print_failure "Invalid email should return 400, got HTTP $http_code: $content"
+    fi
+
+    # Test 4: Registration without authentication (should fail)
+    print_test "Register user without authentication (should fail)"
+    response=$(curl -s -w "%{http_code}" -o /tmp/unauth_register_response -X POST "$BASE_URL/register?email=unauth@example.com&password=$TEST_PASSWORD")
+    http_code="${response: -3}"
+
+    if [ "$http_code" -eq 403 ] || [ "$http_code" -eq 401 ]; then
+        content=$(cat /tmp/unauth_register_response)
+        if echo "$content" | grep -q "Not authenticated\|permission"; then
+            print_success "Unauthenticated registration properly rejected"
+        else
+            print_failure "Unauthenticated registration rejected but wrong error message: $content"
+        fi
+    else
+        content=$(cat /tmp/unauth_register_response)
+        print_failure "Unauthenticated registration should return 401/403, got HTTP $http_code: $content"
     fi
 }
 
@@ -308,6 +348,7 @@ print_results() {
     rm -f /tmp/invalid_pass_response /tmp/protected_response /tmp/no_token_response
     rm -f /tmp/invalid_token_response /tmp/user_response /tmp/nonexistent_user_response
     rm -f /tmp/swagger_response /tmp/redoc_response /tmp/openapi_response
+    rm -f /tmp/admin_login_response /tmp/unauth_register_response
 }
 
 main() {
