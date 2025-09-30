@@ -30,7 +30,7 @@ function Login() {
     })
     .then(data => {
       Cookies.set('access_token', data.access_token, { expires: 7 });
-      navigate('/protected');
+      navigate('/dashboard');
     })
     .catch(error => {
       console.error('Login error:', error);

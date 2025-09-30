@@ -1,6 +1,6 @@
 import Cookies from 'js-cookie';
 
-function Protected() {
+function Dashboard() {
   const token = Cookies.get('access_token');
 
   const handleLogout = () => {
@@ -10,11 +10,11 @@ function Protected() {
 
   return (
     <div>
-      <h1>Protected Page</h1>
+      <h1>Dashboard Page</h1>
       <p>Your access token: <code>{token}</code></p>
       <button onClick={handleLogout}>Logout</button>
     </div>
   );
 }
 
-export default Protected;
+export default Dashboard;

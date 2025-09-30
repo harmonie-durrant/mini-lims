@@ -1,9 +1,9 @@
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import Cookies from 'js-cookie';
 
 import Login from './pages/Login';
-import Protected from './pages/Protected';
+import Dashboard from './pages/Dashboard';
 import { useEffect, useState } from 'react';
 import Navigation from './components/Navigation';
 
@@ -19,9 +19,7 @@ async function ping_backend(url: string): Promise<boolean> {
   }
 }
 
-function Home() {
-  const isLoggedIn = !!Cookies.get('access_token');
-
+function Home({ isLoggedIn }: { isLoggedIn: boolean }) {
   return (
     <div className='flex flex-col text-center items-center justify-center flex-1'>
       <h1 className="text-3xl font-bold underline">
@@ -32,12 +30,12 @@ function Home() {
       </p>
       {!isLoggedIn && (
         <p className="mb-4 text-lg">
-          <Link to="/login">Please log in</Link> to access protected features.
+          <Link to="/login">Please log in</Link> to access the system.
         </p>
       )}
       {isLoggedIn && (
         <p className="mb-4 text-lg">
-          Welcome back! <Link to="/protected">Go to Protected Area</Link>
+          Welcome back! <Link to="/dashboard">Go to Dashboard</Link>
         </p>
       )}
     </div>
@@ -47,6 +45,7 @@ function Home() {
 function App() {
   const [backendAvailable, setBackendAvailable] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     async function checkBackend() {
@@ -87,24 +86,56 @@ function App() {
   }
 
   return (
-    <>
-      <Navigation />
-      <Router>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route 
-            path="/protected" 
-            element={
-              <ProtectedRoute>
-                <Protected />
-              </ProtectedRoute>
-            } 
-          />
-        </Routes>
-      </Router>
-    </>
+    <Router>
+      <AppContent 
+        isLoggedIn={isLoggedIn} 
+        setIsLoggedIn={setIsLoggedIn} 
+      />
+    </Router>
   )
+}
+
+function AppContent({ isLoggedIn, setIsLoggedIn }: { 
+  isLoggedIn: boolean, 
+  setIsLoggedIn: (value: boolean) => void 
+}) {
+  const location = useLocation();
+
+  useEffect(() => {
+    const loggedIn = !!Cookies.get('access_token');
+    console.log('Location changed to:', location.pathname, 'Token exists:', loggedIn);
+    setIsLoggedIn(loggedIn);
+  }, [location.pathname, setIsLoggedIn]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      const loggedIn = !!Cookies.get('access_token');
+      console.log('Delayed check - Token exists:', loggedIn, 'Current isLoggedIn:', isLoggedIn);
+      if (loggedIn !== isLoggedIn) {
+        setIsLoggedIn(loggedIn);
+      }
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [location.pathname, isLoggedIn, setIsLoggedIn]);
+
+  return (
+    <>
+      {isLoggedIn ? <Navigation /> : <></>}
+      <Routes>
+        <Route path="/" element={<Home isLoggedIn={isLoggedIn} />} />
+        <Route path="/login" element={<Login />} />
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } 
+        />
+      </Routes>
+    </>
+  );
 }
 
 export default App
